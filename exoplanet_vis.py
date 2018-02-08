@@ -72,7 +72,7 @@ def orbiting_planet():
         else:
             zdr_star, zdr_planet = 1, 0
         plt.plot(host_x, host_y, ".", color="w", ms=500, zorder=zdr_star)
-        plt.plot(x[i], y[i], ".", color=".5", zorder=zdr_planet, ms=50)
+        plt.plot(x[i], y[i], ".", color=".3", zorder=zdr_planet, ms=50)
         plt.xlim(-11, 11)
         plt.ylim(-11, 11)
         plt.gca().set_aspect('equal', adjustable='box')
