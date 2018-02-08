@@ -49,9 +49,10 @@ def ra_dec(df):
 
 
 def orbiting_planet():
+    plt.rcParams['axes.facecolor'] = 'black'
     host_x, host_y = 0, 0
 
-    a, period, slow_factor = 10, 10, 5
+    a, period, slow_factor = 10, 10, 10
     random_phase = np.random.uniform(0, 2*np.pi)
     inc = 91
 
@@ -65,16 +66,18 @@ def orbiting_planet():
 
     for i in range(nframes):
         plt.clf()
+        plt.figure(figsize=(20, 20))
         if z[i] > 1:
             zdr_star, zdr_planet = 0, 1
         else:
             zdr_star, zdr_planet = 1, 0
-        plt.plot(host_x, host_y, ".", color="yellow", ms=100, zorder=zdr_star)
-        plt.plot(x[i], y[i], "k.", zorder=zdr_planet)
-        plt.xlim(-10, 10)
-        plt.ylim(-10, 10)
+        plt.plot(host_x, host_y, ".", color="w", ms=500, zorder=zdr_star)
+        plt.plot(x[i], y[i], ".", color=".5", zorder=zdr_planet, ms=50)
+        plt.xlim(-11, 11)
+        plt.ylim(-11, 11)
         plt.gca().set_aspect('equal', adjustable='box')
         plt.savefig("orbit_movie/frame_{}".format(str(i).zfill(4)))
+        plt.close()
 
     # Make the movie file
     import os
@@ -89,6 +92,6 @@ def orbiting_planet():
 if __name__ == "__main__":
     radius_ratio = 6.991e7/6.371e6
     df = pd.read_csv("planets.csv", skiprows=69)
-    ra_dec(df)
+    # ra_dec(df)
 
-    # orbiting_planet()
+    orbiting_planet()
