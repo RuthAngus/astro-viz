@@ -42,12 +42,13 @@ if __name__ == "__main__":
             m.append(i)
     df = df.iloc[np.array(m)]
 
-    radius_ratio = 6.991e7/6.371e6  # Convert to Earth radii
+    R_j = 6.991e7
+    radius_ratio = R_j/6.371e6  # Convert to Earth radii
     nframes = 800
     assert nframes % 2 == 0, "nframes must be an even number"
     nstar = 800
 
-    a_s = df.pl_orbsmax.values
+    a_s = df.pl_orbsmax.values * 1.496e11 / R_j
     radii = df.pl_radj.values * radius_ratio
     periods = df.pl_orbper.values
     xpositions = np.zeros((nstar, nframes))
@@ -61,6 +62,7 @@ if __name__ == "__main__":
     lim_max = np.logspace(-2, np.log10(.5), nframes)
     for pos in range(nframes):
         plt.clf()
+        plt.figure(figsize=(16, 9))
         for star in range(nstar):
             plt.scatter(xpositions[star, pos], ypositions[star, pos],
                         s=radii[star]*1./(lim_max[pos]-lim_min[pos]),
@@ -68,7 +70,8 @@ if __name__ == "__main__":
         plt.xlim(lim_min[pos], lim_max[pos])
         plt.ylim(lim_min[pos], lim_max[pos])
         plt.gca().set_aspect('equal', adjustable='box')
-        plt.savefig("movie/frame_{}".format(str(pos).zfill(4)))
+        plt.savefig("planet_cloud_movie/frame_{}".format(str(pos).zfill(4)))
+        plt.close()
 
     # Make the movie file
     import os
@@ -76,5 +79,6 @@ if __name__ == "__main__":
     framerate = 20
     quality = 25
     os.system("/Applications/ffmpeg -r {0} -f image2 -s 1920x1080 -i "\
-            "movie/frame_%04d.png -vcodec libx264 -crf {1}  -pix_fmt "\
-            "yuv420p test.mp4".format(framerate, quality))
+            "planet_cloud_movie/frame_%04d.png -vcodec libx264 -crf {1} "\
+             "-pix_fmt yuv420p planet_cloud_movie.mp4".format(framerate,
+                                                              quality))
