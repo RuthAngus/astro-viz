@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import astropy.constants as co
 import astropy.units as u
+import scipy.spatial as sps
 
 plotpar = {'axes.labelsize': 30,
            'font.size': 25,
@@ -48,14 +49,19 @@ def period_teff_figure(P, teff, age):
 
 def nearest(value, array):
     inds = (np.abs(value - array)).argmin()
-    return array(inds)
+    return inds, array(inds)
 
 
 def animation(P, teff, age):
+    t, p = 5770, 26
     print(np.shape(P), np.shape(teff), np.shape(age))
-    for j, i in enumerate(np.linspace(0, 1, 10)*(len(age)-1)):
-        inds = (np.abs(age - age[int(i)])).argmin()
-        print(j)
+    for i, a in enumerate(np.linspace(0, 13.8, 10):
+        inds, nearest_age = nearest(a, age)
+
+        data = np.vstack((teff, P)).T
+        tree = sps.cKDTree(data)
+        dist, index = tree.query([t, p], 1)
+
         plt.clf()
         plt.figure(figsize=(16, 9))
         plt.scatter(teff, P, c=age, s=20, alpha=.1)
