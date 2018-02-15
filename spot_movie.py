@@ -107,8 +107,9 @@ def integrated_light(lat_deg, lon_deg, Ti, lat_0_deg, lon_0_deg,
         # weights = np.sin(effective_lat[i, :]) * np.cos(effective_lon[i, :])
         # m = 0 < np.sin(lon[i, :])
 
+        # weights = np.sin(lat[i, :]) * np.cos(lon[i, :])
         weights = np.sin(lat[i, :]) * np.cos(lon[i, :])
-        m = 0 < np.sin(effective_lon[i, :])
+        m = 0 < np.sin(effective_lon[i, :]+np.pi/2)
         weights[m] = np.zeros(len(weights[m]))
 
         # Calculate the flux contribution for each row.
@@ -130,17 +131,12 @@ if __name__ == "__main__":
     l = np.sqrt(np.sum(pts**2, axis=1))  # Take the sum of the abs value.
     pts = pts / l[:, np.newaxis]
 
-    star_temp, spot_temp = 1./(nrows*ncols), 0 #.5/(nrows*ncols)
+    relative_spot_flux = .001
+    star_temp, spot_temp = 1./(nrows*ncols), relative_spot_flux/(nrows*ncols)
     T = star_temp * np.ones(500)  # np.random.rand(500)
-    # nspots = 2
-    # indices = np.random.choice(range(500), nspots)
-    # T[indices] = np.ones(nspots) * spot_temp
-
-    # # Add larger spots
-    # nbig, size = 1, 10
-    # big_indices = np.random.choice(range(500-size), nbig)
-    # for i in range(size):
-    #     T[big_indices+i] = np.ones(nbig) * spot_temp
+    nspots = 10
+    indices = np.random.choice(range(500), nspots)
+    T[indices] = np.ones(nspots) * spot_temp
 
     # naive IDW-like interpolation on regular grid
     theta, phi, r = cart2sph(*pts.T)
@@ -161,7 +157,8 @@ if __name__ == "__main__":
                 Ti[r, c] = np.sum(T * idw)
 
     nrotations = 2
-    nframes = 360*nrotations/20
+    nframes = 50
+    # nframes = 360*nrotations/20
     longitudes = np.linspace(360*nrotations, 0, nframes)
     fluxes, wgs, temps, max_flux = [], [], [], []
     for i, l in enumerate(longitudes):
@@ -169,7 +166,7 @@ if __name__ == "__main__":
         fluxes.append(flux)
         wgs.append(weights)
 
-    fluxes = np.array(fluxes) #/ np.var(fluxes)
+    fluxes = np.array(fluxes) / max(fluxes)
     times = np.linspace(0, nrotations, len(longitudes))
     for i, l in enumerate(longitudes):
         plt.figure(figsize=(16, 9))
@@ -190,7 +187,7 @@ if __name__ == "__main__":
         # cs = map.contourf(x, y, Ti, 15, cmap="inferno_r")
         cs = map.contourf(lon, lat, Ti, 15, cmap="inferno", latlon=True)
 
-        flux_ppm = fluxes*1e6
+        flux_ppm = fluxes  # *1e6
         plt.subplot(2, 1, 2)
         plt.plot(times[:i], flux_ppm[:i], ".")
         plt.xlim(0, 2)
