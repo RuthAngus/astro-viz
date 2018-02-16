@@ -80,21 +80,22 @@ def adjust_array_length(effective_lon):
 def integrated_light(lat_deg, lon_deg, Ti, lat_0_deg, lon_0_deg,
                      star_temp=4100):
 
+    effective_lon = deg_to_rad(lon_deg + lon_0_deg)
+    effective_lat = deg_to_rad(lat_deg + lat_0_deg)
+
     # Convert to radians
     lat, lon, lat_0, lon_0 = convert_to_rads(lat_deg, lon_deg, lat_0_deg,
                                              lon_0_deg)
 
     # Calculate effective latitude and longitude of each point on star.
     # This is lat/lon of each point + lat/lon of the star's orientation.
-    effective_lon = lon + lon_0
-    effective_lat = lat - lat_0
 
     # Calculate integrated flux
     flux, ws, Tis, max_flux, max_Ts = 0, 0, 0, 0, 0
     max_T = np.ones_like(Ti) * star_temp
+    weight_array = np.zeros_like(Ti)
 
     for i in range(np.shape(lon)[0]):  # For each row in lon:
-
         # Some fiddling needed because of finite pixel sizes.
         # m = adjust_array_length(effective_lon)
 
@@ -107,10 +108,13 @@ def integrated_light(lat_deg, lon_deg, Ti, lat_0_deg, lon_0_deg,
         # weights = np.sin(effective_lat[i, :]) * np.cos(effective_lon[i, :])
         # m = 0 < np.sin(lon[i, :])
 
-        # weights = np.sin(lat[i, :]) * np.cos(lon[i, :])
-        weights = np.sin(lat[i, :]) * np.cos(lon[i, :])
-        m = 0 < np.sin(effective_lon[i, :]+np.pi/2)
+        # weights = np.cos(effective_lat[i, :]) * np.cos(effective_lon[i, :])
+        weights = np.cos(lat[i, :]) * np.cos(lon[i, :])
+        m = (0 < np.cos(effective_lon[i, :])) #* \
+            # (0 < np.cos(effective_lat[i, :]))
         weights[m] = np.zeros(len(weights[m]))
+        weights = np.abs(weights)
+        weight_array[i, :] = weights
 
         # Calculate the flux contribution for each row.
         # m = adjust_array_length(effective_lon)
@@ -118,11 +122,56 @@ def integrated_light(lat_deg, lon_deg, Ti, lat_0_deg, lon_0_deg,
         max_flux += sum(weights * max_T[i, :])  # [m])
         max_Ts += sum(max_T[i, :]) # [m])
 
-    return flux, ws, Tis, max_flux
+#         plt.figure(figsize=(16, 9))
+#         plt.plot(effective_lon[i, :]/np.pi, weights)
+#         plt.xlabel("longitude [pi]")
+#         plt.ylabel("weight")
+#         plt.savefig("spot_movie/lon_{}".format(str(i).zfill(4)))
+#         plt.close()
+
+        # plt.figure(figsize=(16, 9))
+        # plt.plot(effective_lon[i, :], Ti[i, :])
+        # plt.ylabel("temp")
+        # plt.savefig("spot_movie/temp_{}".format(str(i).zfill(4)))
+        # plt.close()
+
+        # plt.plot(lon[i, :], weights)
+        # plt.ylabel("weights")
+        # plt.ylim(-1, 1)
+        # plt.savefig("spot_movie/weights_{}".format(str(i).zfill(4)))
+        # plt.close()
+
+    # plt.figure(figsize=(16, 9))
+    # plt.plot(effective_lat[:, 45]/np.pi, weight_array[:, 45])
+    # plt.xlabel("latitude [pi]")
+    # plt.ylabel("weight")
+    # # plt.savefig("spot_movie/lat_{}".format(str(i).zfill(4)))
+    # plt.savefig("lats")
+    # plt.close()
+    # assert 0
+
+    return flux, ws, Tis, max_flux, weight_array
+
+
+def add_spot(x, y, z, star_radius, spot_phi, spot_theta, spot_radius):
+    spot_center_uv = np.array([spot_phi,spot_theta])
+    spot_center_xyz = np.array([np.outer(np.cos(spot_center_uv[0]),np.sin(spot_center_uv[1])),
+                                np.outer(np.sin(spot_center_uv[0]),
+                                         np.sin(spot_center_uv[1])),
+                                np.outer(1,np.cos(spot_center_uv[1]))])
+    x_sep = x/star_radius - spot_center_xyz[0]
+    y_sep = y/star_radius - spot_center_xyz[1]
+    z_sep = z/star_radius - spot_center_xyz[2]
+    chord_length = np.sqrt(x_sep**2 + y_sep**2 + z_sep**2)
+    central_angle = 2 * np.arcsin(chord_length/2)
+    great_circle_distance = star_radius * central_angle
+    spot = great_circle_distance < spot_radius
+    return spot
 
 
 if __name__ == "__main__":
 
+    # nrows, ncols = 180, 360
     nrows, ncols = 90, 180
 
     np.random.seed(123)
@@ -131,17 +180,18 @@ if __name__ == "__main__":
     l = np.sqrt(np.sum(pts**2, axis=1))  # Take the sum of the abs value.
     pts = pts / l[:, np.newaxis]
 
-    relative_spot_flux = .001
-    star_temp, spot_temp = 1./(nrows*ncols), relative_spot_flux/(nrows*ncols)
+    relative_spot_flux = 0
+    star_temp, spot_temp = 1e8/(nrows*ncols), relative_spot_flux#/(nrows*ncols)
     T = star_temp * np.ones(500)  # np.random.rand(500)
-    nspots = 10
+    nspots = 1
     indices = np.random.choice(range(500), nspots)
-    T[indices] = np.ones(nspots) * spot_temp
+    # T[indices] = np.ones(nspots) * spot_temp
 
     # naive IDW-like interpolation on regular grid
     theta, phi, r = cart2sph(*pts.T)
     lon, lat = np.meshgrid(np.linspace(0, 360, ncols),
                            np.linspace(-90, 90, nrows))
+                           # np.linspace(0, 180, nrows))
 
     xg, yg, zg = sph2cart(lon, lat)
     Ti = np.zeros_like(lon)
@@ -156,17 +206,35 @@ if __name__ == "__main__":
                 idw = 1 / angs**2 / sum(1 / angs**2)
                 Ti[r, c] = np.sum(T * idw)
 
+    star_radius, spot_theta, spot_phi, spot_radius = 1, 0, np.pi/2, .5
+    spot = add_spot(xg, yg, zg, star_radius, spot_theta, spot_phi, spot_radius)
+    for i, row in enumerate(Ti[:, 0]):
+        m = (0 < lon[i, :]) * (lon[i, :] < 30)
+        Ti[i, :][spot[i, :]] = np.zeros(len(Ti[i, :][spot[i, :]]))
+
+    plt.imshow(Ti)
+    plt.colorbar()
+    plt.savefig("temp_map")
+    plt.close()
+
     nrotations = 2
     nframes = 50
     # nframes = 360*nrotations/20
     longitudes = np.linspace(360*nrotations, 0, nframes)
     fluxes, wgs, temps, max_flux = [], [], [], []
     for i, l in enumerate(longitudes):
-        flux, weights, temps, max_flux = integrated_light(lat, lon, Ti, 10, l)
+        flux, weights, temps, max_flux, weight_array = \
+            integrated_light(lat, lon, Ti, 0, l)
         fluxes.append(flux)
         wgs.append(weights)
 
-    fluxes = np.array(fluxes) / max(fluxes)
+    plt.imshow(weight_array)
+    plt.colorbar()
+    plt.savefig("weight_map")
+    plt.close()
+
+    # fluxes = np.array(fluxes) / max(fluxes)
+    fluxes = np.array(fluxes) / np.var(fluxes)
     times = np.linspace(0, nrotations, len(longitudes))
     for i, l in enumerate(longitudes):
         plt.figure(figsize=(16, 9))
@@ -189,10 +257,11 @@ if __name__ == "__main__":
 
         flux_ppm = fluxes  # *1e6
         plt.subplot(2, 1, 2)
-        plt.plot(times[:i], flux_ppm[:i], ".")
+        plt.plot(times[:i], -flux_ppm[:i], ".")
         plt.xlim(0, 2)
-        plt.ylim(min(flux_ppm)-1, max(flux_ppm)+1)
+        # plt.ylim(min(flux_ppm)-1, max(flux_ppm)+1)
         plt.xlabel("$\\#~\mathrm{Full~Rotations}$")
         plt.ylabel("$\mathrm{Flux~[parts~per~million]}$")
+
         plt.savefig("spot_movie/frame_{}".format(str(i).zfill(4)))
         plt.close()
