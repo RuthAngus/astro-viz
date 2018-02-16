@@ -57,6 +57,8 @@ if __name__ == "__main__":
     rad_init = np.array([2, 2, 2])
     nrad = 20
 
+    fudges = [.08, 0, -.05]
+
     periods = np.zeros((3, nrad + niter))
     # For three stars:
     for i in range(3):
@@ -74,7 +76,7 @@ if __name__ == "__main__":
         periods[i, nrad:] = ps
 
         plt.plot(np.arange(np.shape(periods)[1]) * delta_t * 500 - 100,
-                 periods[i])
+                 periods[i]+fudges[i])
 
     plt.xlabel("$\mathrm{Time~Since~ZAMS~[Myr]}$")
     plt.ylabel("$P_{\mathrm{rot}}~\mathrm{[Days]}$")
