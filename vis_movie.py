@@ -48,7 +48,7 @@ if __name__ == "__main__":
     assert nframes % 2 == 0, "nframes must be an even number"
     nstar = 800
 
-    a_s = df.pl_orbsmax.values * 1.496e11 / R_j
+    a_s = df.pl_orbsmax.values #* 1.496e11 / R_j
     radii = df.pl_radj.values * radius_ratio
     periods = df.pl_orbper.values
     xpositions = np.zeros((nstar, nframes))

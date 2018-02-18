@@ -70,3 +70,17 @@ if __name__ == "__main__":
     dt = 1e6 * 365.25 * 24 * 60 * 60 * u.s  # 1 million years
     new_period = spin_down_rate(t, R, M, period, dt)
     print(period.value/60/60/24, new_period.value/60/60/24)
+
+    period = 10 * 24 * 60 * 60 * u.s
+    periods = []
+    for i in range(100):
+        p = spin_down_rate(t, R, M, period, dt)
+        period = p.value
+        periods.append(period)
+
+    times = np.arange(100) * dt
+    plt.clf()
+    print(times)
+    print(periods)
+    plt.plot(times, np.array(periods)/60/60/24)
+    plt.savefig("rot_evolution")

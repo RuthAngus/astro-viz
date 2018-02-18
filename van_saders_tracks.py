@@ -47,30 +47,27 @@ def period_teff_figure(P, teff, age):
     plt.savefig("vs_tracks_period_teff")
 
 
-def nearest(value, array):
-    inds = (np.abs(value - array)).argmin()
-    return inds, array(inds)
-
-
 def animation(P, teff, age):
     t, p = 5770, 26
     print(np.shape(P), np.shape(teff), np.shape(age))
-    for i, a in enumerate(np.linspace(0, 13.8, 10):
-        inds, nearest_age = nearest(a, age)
+    for i, a in enumerate(np.linspace(0, 13.8, 10)):
 
-        data = np.vstack((teff, P)).T
+        data = np.vstack((teff, P, age)).T
         tree = sps.cKDTree(data)
-        dist, index = tree.query([t, p], 1)
+        interpolate = np.interp
+        dist, index = tree.query([t, p, a], 1)
+        print(teff[index], P[index], age[index], a)
 
         plt.clf()
         plt.figure(figsize=(16, 9))
         plt.scatter(teff, P, c=age, s=20, alpha=.1)
-        plt.scatter(teff[inds], P[inds], c=age[inds], s=20)
+        # plt.scatter(teff[index], P[index], c=age[index], s=20)
+        plt.plot(teff[index], P[index], "k.", ms=10)
         plt.xlabel("$T_\mathrm{eff}~[K]$")
         plt.ylabel("$\mathrm{Period~[Days]}$")
-        plt.colorbar()#label="$\mathrm{Age~[Gyr]}$")
+        plt.colorbar()  # label="$\mathrm{Age~[Gyr]}$")
         plt.xlim(6250, 4000)
-        plt.savefig("gyro_movie/frame_{}".format(str(j).zfill(4)))
+        plt.savefig("gyro_movie/frame_{}".format(str(i).zfill(4)))
 
 
 if __name__ == "__main__":
