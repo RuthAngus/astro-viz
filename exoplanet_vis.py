@@ -66,17 +66,17 @@ def orbiting_planet():
 
     for i in range(nframes):
         plt.clf()
-        plt.figure(figsize=(20, 20))
+        plt.figure(figsize=(16, 9), dpi=300)
         if z[i] > 1:
             zdr_star, zdr_planet = 0, 1
         else:
             zdr_star, zdr_planet = 1, 0
         plt.plot(host_x, host_y, ".", color="w", ms=500, zorder=zdr_star)
         plt.plot(x[i], y[i], ".", color=".3", zorder=zdr_planet, ms=50)
-        plt.xlim(-11, 11)
-        plt.ylim(-11, 11)
+        plt.xlim(-16, 16)
+        plt.ylim(-9, 9)
         plt.gca().set_aspect('equal', adjustable='box')
-        plt.savefig("orbit_movie/frame_{}".format(str(i).zfill(4)))
+        plt.savefig("orbit_movie/frame_{}".format(str(i).zfill(4)), dpi=300)
         plt.close()
 
     # Make the movie file
