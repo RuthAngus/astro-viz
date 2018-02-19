@@ -46,7 +46,7 @@ def plot(inner, outer, teff, r, a, min_teff, max_teff, logage, name, fnumber):
     plt.fill_betweenx(y, x_inner, x_outer, alpha=.5)
     # plt.fill_betweenx(y, 0, x_inner, alpha=.5, color="red")
     # plt.fill_betweenx(y, x_outer, 10, alpha=.5, color="blue")
-    plt.title("Age = {0:.3f} Gyr".format(np.exp(logage)))
+    plt.title("Age = {0:.3f} Gyr".format(10**(logage)))
     plt.colorbar(label="$\mathrm{Effective~Temperature~[K]}$")
     plt.ylim(-.05, .05)
     if a < 1:
@@ -72,8 +72,8 @@ def HZ_movie(df, min_teff, max_teff, max_L, a, name, interval=10):
     he = df.he_core_mass.values[m]
 
     # for i, logage in enumerate(np.log(star_age[::interval])):
-    nsteps = 50
-    logages = np.log(np.linspace(0, 13.8, nsteps))
+    nsteps = 100
+    logages = np.log10(np.linspace(0, 13.8, nsteps))
     for i, la in enumerate(logages):
         print(i, "of", nsteps)
         logage = find_nearest(np.log(star_age), la)
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     # Load isochrones
     path = "data/00100M.track.csv"
     df = pd.read_csv(path, skiprows=11)
-    # HZ_movie(df, min_teff, max_teff, max_L, a_earth, "sun_HZ")
+    HZ_movie(df, min_teff, max_teff, max_L, 1, "sun_HZ")
 
     min_teff, max_teff, max_L, a = 2000, 5000, 10, .025
     path = "data/00010M.track.csv"
