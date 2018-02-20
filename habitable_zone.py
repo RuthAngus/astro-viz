@@ -61,7 +61,21 @@ def find_nearest(array, value):
     return array[idx]
 
 
-def HZ_movie(df, min_teff, max_teff, max_L, a, name, interval=10):
+def HZ_movie(df, min_teff, max_teff, max_L, sma, albedo, name, interval=10):
+    """
+    df: (pandas dataframe)
+        Isochrones data frame.
+    min_teff: (int or float)
+        temperature at the outer edge of the HZ
+    max_teff: (int or float)
+        temperature at the inner edge of the HZ
+    sma: (float)
+        the semi-major axis of the planet in AU.
+    albedo: (float)
+        The albedo of the planet. (between 0 and 1)
+    name: (str)
+        The name of the directory to save movie files in.
+    """
     # Select a small section of the HR diagram.
     m = (10**df.log_L < max_L) * (10**df.log_Teff < max_teff) * \
         (min_teff < 10**df.log_Teff) * (df.star_age*1e-9 < 13.8)
@@ -71,26 +85,27 @@ def HZ_movie(df, min_teff, max_teff, max_L, a, name, interval=10):
     R = 10**df.log_R.values[m]
     he = df.he_core_mass.values[m]
 
-    # for i, logage in enumerate(np.log(star_age[::interval])):
-    nsteps = 100
+    nsteps = 57
+    # logages = np.log10(star_age[::interval])
     logages = np.log10(np.linspace(0, 13.8, nsteps))
     for i, la in enumerate(logages):
-        print(i, "of", nsteps)
+        print(i, "of", len(logages))
         logage = find_nearest(np.log(star_age), la)
+        # logage = la
         star = logage == np.log(star_age)
-        outer_HZ = HZ(teff[star], R[star]*co.R_sun, a, T_outer)
-        inner_HZ = HZ(teff[star], R[star]*co.R_sun, a, T_inner)
+        outer_HZ = HZ(teff[star], R[star]*co.R_sun, albedo, T_outer)
+        inner_HZ = HZ(teff[star], R[star]*co.R_sun, albedo, T_inner)
         inner = inner_HZ/co.au
         outer = outer_HZ/co.au
-        print(inner)
-        plot(inner[0], outer[0], teff[star][0], 4000*R[star][0], a, min_teff,
-             max_teff, logage, name, i)
+        plot(inner[0], outer[0], teff[star][0], 4000*R[star][0], sma,
+             min_teff, max_teff, logage, name, i)
 
 
 if __name__ == "__main__":
     T_sun = 5777
     R_sun = co.R_sun
     a_earth = .3
+    sma_earth = 1
     T_inner, T_outer = 373, 250
     print(equilibrium_temperature(T_sun, R_sun, a_earth, co.au))
 
@@ -98,9 +113,10 @@ if __name__ == "__main__":
     # Load isochrones
     path = "data/00100M.track.csv"
     df = pd.read_csv(path, skiprows=11)
-    HZ_movie(df, min_teff, max_teff, max_L, 1, "sun_HZ")
+    HZ_movie(df, min_teff, max_teff, max_L, sma_earth, a_earth, "sun_HZ")
 
-    min_teff, max_teff, max_L, a = 2000, 5000, 10, .025
+    min_teff, max_teff, max_L, sma = 2000, 5000, 10, .025
     path = "data/00010M.track.csv"
     df = pd.read_csv(path, skiprows=11)
-    HZ_movie(df, min_teff, max_teff, max_L, a, "mdwarf_HZ", interval=3)
+    HZ_movie(df, min_teff, max_teff, max_L, .025, a_earth, "mdwarf_HZ",
+             interval=3)
