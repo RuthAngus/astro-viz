@@ -10,6 +10,8 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.gridspec as gridspec
+from matplotlib.colors import LightSource
+from matplotlib import cm
 
 plotpar = {'axes.labelsize': 30,
            'font.size': 25,
@@ -201,28 +203,31 @@ if __name__ == "__main__":
     fluxes = np.array(fluxes) / np.var(fluxes)
     times = np.linspace(0, nrotations, len(longitudes))
 
-    from matplotlib.colors import LightSource
-    from matplotlib import cm
-
     for i, azimuth in enumerate(longitudes):
         print(i)
 
+        # print(type(light))
+        # illuminated_surface = light.shade(z.shape)
+        # illuminated_surface = light.shade(z.shape, cmap=cm.coolwarm)
 
-        light = LightSource(90, longitudes)
-        c = light.shade(z.shape, cmap=cm.coolwarm)
+        light = LightSource(90, azimuth)
+        c = np.empty(z.shape , dtype="str")
+        c[:] = "w"
+        cz = np.random.randn(np.shape(z)[0], np.shape(z)[1]) + 4100
+
         # Add spots
-        # c = np.empty(z.shape , dtype="str")
         Ti = np.empty(z.shape)
         Ti[:] = 1
-        # c[:] = "w"
         for s in range(nspots):
             spot = add_spot(x, y, z, r, spot_phi[s], spot_theta[s],
                             spot_radius[s])
             c[spot] = "k"
             Ti[spot] = 0
+            cz[spot] = 2000
 
+        c = light.shade(cz, cmap=cm.inferno)
 
-        fig = plt.figure(figsize=(16, 9))
+        fig = plt.figure(figsize=(16, 9), dpi=300)
 
         gs = gridspec.GridSpec(4, 3)
         # ax = fig.add_subplot(211, projection='3d', aspect='equal')
@@ -242,4 +247,4 @@ if __name__ == "__main__":
         # ax2.set_ylabel("$\mathrm{Flux~[parts~per~million]}$")
         ax2.set_ylabel("$\mathrm{Flux}$")
 
-        plt.savefig("spot_movie/frame_{}".format(str(i).zfill(4)))
+        plt.savefig("spot_movie/frame_{}".format(str(i).zfill(4)), dpi=300)
