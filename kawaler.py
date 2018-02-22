@@ -46,13 +46,13 @@ def J_conserv(R, M):
 if __name__ == "__main__":
 
     plt.figure(figsize=(16, 9))
-    niter = 100
+    niter = 1000
 
     R = np.array([1, 1, 1])
     M = np.array([1, 1, 1])
     period_init = np.array([3, 4, 4.5])
     omega_init = 2 * np.pi / period_init
-    delta_t = 1e-2
+    delta_t = 1e-3
 
     rad_init = np.array([2, 2, 2])
     nrad = 20
@@ -60,6 +60,7 @@ if __name__ == "__main__":
     fudges = [.08, 0, -.05]
 
     periods = np.zeros((3, nrad + niter))
+    # periods = np.zeros((3, niter))
     # For three stars:
     for i in range(3):
 
@@ -75,11 +76,19 @@ if __name__ == "__main__":
         os, ps = calc_periods(omega_init[i], R[i], M[i], delta_t, niter=niter)
         periods[i, nrad:] = ps
 
-        plt.plot(np.arange(np.shape(periods)[1]) * delta_t * 500 - 100,
+        plt.plot((np.log10(np.arange(np.shape(periods)[1]) * delta_t * 5e6)
+                 - np.log10(1e6)) * np.log10(5e6),
                  periods[i]+fudges[i])
 
-    plt.xlabel("$\mathrm{Time~Since~ZAMS~[Myr]}$")
+        # # Kawaler spin down.
+        # os, ps = calc_periods(omega_init[i], R[i], M[i], delta_t, niter=niter)
+        # plt.plot(np.log10(np.arange(len(ps)) * delta_t * 5e6),
+        #          periods[i]+fudges[i])
+
+    print(np.log10(5e6))
+    print(np.log10(np.arange(np.shape(periods)[1]) * delta_t * 5e6 - 1e6)[1])
+    plt.xlabel("$\log_{10}(\mathrm{Time~[yr]})$")
     plt.ylabel("$P_{\mathrm{rot}}~\mathrm{[Days]}$")
-    # plt.xlim(0, 500)
+    plt.xlim(0, np.log10(5e6))
     plt.savefig("kawaler")
     plt.close()
