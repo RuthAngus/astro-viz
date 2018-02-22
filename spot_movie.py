@@ -206,11 +206,8 @@ if __name__ == "__main__":
     for i, azimuth in enumerate(longitudes):
         print(i)
 
-        # print(type(light))
-        # illuminated_surface = light.shade(z.shape)
-        # illuminated_surface = light.shade(z.shape, cmap=cm.coolwarm)
-
-        light = LightSource(90, azimuth)
+        # light = LightSource(90, azimuth)
+        light = LightSource(90, 90)
         c = np.empty(z.shape , dtype="str")
         c[:] = "w"
         cz = np.random.randn(np.shape(z)[0], np.shape(z)[1]) + 4100
@@ -225,9 +222,9 @@ if __name__ == "__main__":
             Ti[spot] = 0
             cz[spot] = 2000
 
-        c = light.shade(cz, cmap=cm.inferno)
+        # c = light.shade(cz, cmap=cm.inferno)
 
-        fig = plt.figure(figsize=(16, 9), dpi=300)
+        fig = plt.figure(figsize=(16, 9), dpi=200)
 
         gs = gridspec.GridSpec(4, 3)
         # ax = fig.add_subplot(211, projection='3d', aspect='equal')
@@ -247,4 +244,5 @@ if __name__ == "__main__":
         # ax2.set_ylabel("$\mathrm{Flux~[parts~per~million]}$")
         ax2.set_ylabel("$\mathrm{Flux}$")
 
-        plt.savefig("spot_movie/frame_{}".format(str(i).zfill(4)), dpi=300)
+        plt.savefig("spot_movie/frame_{}".format(str(i).zfill(4)), dpi=200)
+        plt.close()
